@@ -29,6 +29,7 @@ import {ProjectService} from '../../core/rest/project.service';
 import {isNullOrUndefined} from 'util';
 import {Role} from '../../shared/permissions/role';
 import {UserSettingsService} from '../../core/user-settings.service';
+import {NotificationsService} from "angular2-notifications/dist";
 
 const squareSize: number = 200;
 const arrowSize: number = 40;
@@ -65,7 +66,8 @@ export class WorkspaceChooserComponent implements OnInit {
               private projectService: ProjectService,
               private userSettingsService: UserSettingsService,
               private workspaceService: WorkspaceService,
-              private router: Router) {
+              private router: Router,
+              private notificationsService: NotificationsService) {
   }
 
   public ngOnInit() {
@@ -113,10 +115,6 @@ export class WorkspaceChooserComponent implements OnInit {
     this.activeOrgIx = index;
   }
 
-  public onCreateOrganization() {
-    this.router.navigate(['organization', 'add']);
-  }
-
   public onOrganizationSettings(index: number) {
     this.router.navigate(['organization', this.organizations[index].code]);
   }
@@ -127,12 +125,6 @@ export class WorkspaceChooserComponent implements OnInit {
 
   public onSelectProject(index: number) {
     this.activeProjIx = index;
-  }
-
-  public onCreateProject() {
-    if (!isNullOrUndefined(this.activeOrgIx)) {
-      this.router.navigate(['organization', this.organizations[this.activeOrgIx].code, 'project', 'add']);
-    }
   }
 
   public onProjectSettings(index: number) {
@@ -171,4 +163,5 @@ export class WorkspaceChooserComponent implements OnInit {
     userSettings.defaultProject = projectCode;
     this.userSettingsService.updateUserSettings(userSettings);
   }
+
 }

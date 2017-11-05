@@ -198,3 +198,12 @@ $box-shadow-right: -4px -5px 5px 1px $box-shadow-color;
   }
 }
 
+.textarea {
+
+  z-index: 100000000;
+  resize: none;
+  border: none;
+  outline: none;
+  overflow: hidden;
+}
+

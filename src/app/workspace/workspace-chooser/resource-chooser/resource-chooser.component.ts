@@ -26,6 +26,13 @@ import {animate, keyframes, state, style, transition, trigger} from '@angular/an
 import {Resource} from '../../../core/dto/resource';
 import {isNullOrUndefined} from 'util';
 import {Role} from '../../../shared/permissions/role';
+import {COLLECTION_NO_COLOR, COLLECTION_NO_ICON} from "../../../collection/constants";
+import {OrganizationService} from '../../../core/rest/organization.service';
+import {ProjectService} from '../../../core/rest/project.service';
+import {NotificationsService} from 'angular2-notifications/dist';
+import {Organization} from "../../../core/dto/organization";
+import {WorkspaceService} from '../../../core/workspace.service';
+import {Project} from '../../../core/dto/project';
 
 const squareSize: number = 200;
 const arrowSize: number = 40;
@@ -95,6 +102,17 @@ export class ResourceChooserComponent implements OnChanges {
   public resourceLineSizes = [0, 0, 0];
   public resourceVisibleArrows = false;
   public resourceDescriptionEditable = false;
+  public newResource;
+
+  public newOrganization: Organization = new Organization();
+
+  public uninitializedResources: Set<Resource> = new Set();
+
+  constructor(private organizationService: OrganizationService,
+              private projectService: ProjectService,
+              private notificationsService: NotificationsService,
+              private workspaceService: WorkspaceService) {
+  }
 
   public ngOnChanges(changes: { [propertyName: string]: SimpleChange }) {
     if (changes['resources']) {
@@ -102,8 +120,25 @@ export class ResourceChooserComponent implements OnChanges {
       this.checkForScrollRightResources();
       this.resourceActiveIx = this.initActiveIx;
       this.computeResourceLines(this.resourceActiveIx);
+      //this.updatePostIts();
     }
   }
+
+  // public ngOnInit() {
+  //   this.updatePostIts();
+  // }
+
+  // public updatePostIts() {
+  //   // for (let i = 0; i < this.resources.length; i++) {
+  //   //   this.resources.push(new ResourcePostIt());
+  //   //   this.resources[i].resource = this.resources[i];
+  //   //   this.resources[i].initialized = true;
+  //   // }
+  //   //
+  //   // this.resources.splice(this.resources.length, this.resources.length - this.resources.length);
+  //   // console.log('Postits' + this.resources.length);
+  //   // console.log('Resources' + this.resources.length);
+  // }
 
   @HostListener('window:resize', ['$event'])
   private onResize(event) {
@@ -219,9 +254,22 @@ export class ResourceChooserComponent implements OnChanges {
     this.resourceLineSizes[2] = (this.resources.length - index - (this.canCreateResource ? 0 : 1)) * squareSize;
   }
 
-  public onCreateResource() {
-    this.resourceNew.emit();
+  public onAddResource() {
+    this.newResource = {
+      name: '',
+      color: COLLECTION_NO_COLOR,
+      icon: COLLECTION_NO_ICON,
+      initialized: false
+    }
+
+    this.resources.push(this.newResource);
+    this.uninitializedResources.add(this.newResource);
+    // this.resourceNew.emit();
   }
+
+  // onCreateResource() {
+  //   this.resourceNew.emit();
+  // }
 
   public onResourceSettings(index: number) {
     this.resourceSettings.emit(index);
@@ -231,5 +279,57 @@ export class ResourceChooserComponent implements OnChanges {
     return resource.permissions && resource.permissions.users.length === 1
       && resource.permissions.users[0].roles.some(r => r === Role.Manage.toString());
   }
+
+  public onCreateOrganization(organization: Organization): boolean {
+    this.organizationService.createOrganization(organization).subscribe(response => {
+      this.notificationsService
+        .success('Success', 'Organization created');
+      // const code = response.headers.get('Location').split('/').pop();
+      // organization.code = code;
+      // console.log(response);
+      return true;
+    }, error => {
+      this.notificationsService
+        .error('Error', 'Error creating organization');
+      // console.log(error);
+      return false;
+    });
+    return false;
+  }
+
+  public onCreateProject(orgCode: string, project: Project): void {
+    if (!isNullOrUndefined(orgCode)) {
+      this.projectService.createProject(orgCode, project).subscribe(response => this.notificationsService
+        .success('Success', 'Project created'), error => this.notificationsService
+        .error('Error', 'Error creating project'));
+    }
+  }
+
+
+  public initializeResource(resource: Resource): void {
+    switch (this.resourceType) {
+      case 'organization':
+        this.newOrganization = {
+          code: 'newcode',
+          name: resource.name,
+          color: resource.color,
+          icon: resource.icon
+        };
+        let created: boolean = this.onCreateOrganization(this.newOrganization);
+        if (created) {
+          this.uninitializedResources.delete(resource);
+        }
+        break;
+
+      case 'project':
+        this.onCreateProject(this.workspaceService.organizationCode, resource);
+        break;
+    }
+  }
+
+  public isInitialized(resource: Resource): boolean {
+    return !this.uninitializedResources.has(resource);
+  }
+
 
 }
