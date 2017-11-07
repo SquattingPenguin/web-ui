@@ -73,6 +73,7 @@ export class WorkspaceChooserComponent implements OnInit {
   public ngOnInit() {
     this.organizationService.getOrganizations()
       .subscribe(organizations => {
+        console.log('got', organizations);
         this.organizations = organizations;
 
         if (this.workspaceService.organizationCode) {
@@ -99,6 +100,14 @@ export class WorkspaceChooserComponent implements OnInit {
               });
           }
         }
+      });
+  }
+
+  public getOrganizations(): void {
+    this.organizationService.getOrganizations()
+      .subscribe(organizations => {
+        console.log('got', organizations);
+        this.organizations = organizations;
       });
   }
 

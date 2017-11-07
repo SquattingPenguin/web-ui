@@ -27,7 +27,7 @@
            [style.width]="resourceWidth + 'px'">
 
         <div class="tab d-flex" *ngFor="let resource of resources; let ix = index"
-             (click)="onResourceSelected(ix)">
+             (click)="isInitialized(resource) && onResourceSelected(ix) && resources[ix]">
           <div class="post-it align-self-center">
             <div class="card square" [style.border-color]="resource.color"></div>
             <div class="card text-center content border-0" [style.color]="resource.color">
@@ -35,17 +35,18 @@
                 <i class="fas fa fa-cog settings" *ngIf="hasManageRole(resource)"
                    (click)="onResourceSettings(ix); $event.stopPropagation()"
                    [style.opacity]="ix === resourceActiveIx ? 1 : 0"></i>
-                <i class="fas fa-3x {{resource.icon}}" aria-hidden="true"></i>
+                <i class="fa fa-3x {{resource.icon}}" aria-hidden="true"></i>
               </div>
               <textarea class="card-footer text-center font-weight-bold bg-transparent" #textArea
                         rows="1"
                         [(ngModel)]="resource.name" [(ngModel)]="resource.code"
-                        (blur)="!isInitialized(resource) && initializeResource(resource)">
+                        (blur)="!isInitialized(resource) && initializeResource(resource) ">
               </textarea>
             </div>
           </div>
+          <!---->
           <div class="align-self-stretch border border-bottom-0 rounded-top bookmark"
-               *ngIf="ix === resourceActiveIx" [@animateVisible]="'in'"></div>
+               *ngIf=" !isAnyResourceInitializing() && (ix === resourceActiveIx)  " [@animateVisible]="'in'"></div>
 
         </div>
 
@@ -59,7 +60,8 @@
           </div>
         </div>
 
-        <div class="d-flex flex-row align-items-end justify-content-end pointer" *ngIf="resourceActiveIx >= 0">
+        <div class="d-flex flex-row align-items-end justify-content-end pointer"
+             *ngIf="!isAnyResourceInitializing() && (resourceActiveIx >= 0)  ">
           <div class="line mr-auto" [style.width]="resourceLineSizes[0]+'px'"></div>
           <div class="empty-line" [style.width]="resourceLineSizes[1]+'px'"></div>
           <div class="line"
@@ -75,7 +77,6 @@
            [class.disabled]="!resourceCanScrollRight"></i>
       </div>
     </div>
-
   </div>
 
   <div class="description d-inline-flex pt-3" *ngIf="resourceActiveIx >= 0" [@animateOpacityFromUp]="'in'">
